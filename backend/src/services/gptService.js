@@ -5,7 +5,8 @@ const askGPT = async (action, content) => {
   let prompt = "";
 
   if (action === "summary") {
-    prompt = `Summarize the following lecture in bullet points:\n\n${content}`;
+    prompt = `Summarize the following lecture content in a professional, organized, and easy-to-read format. Use headings, subheadings, and bullet points where appropriate. Ensure that each key idea is presented clearly, and avoid using symbols or JSON-like formatting. Structure the summary to enhance readability and flow for a modern audience.\n\n${content}`;
+
   } else if (action === "flashcards") {
     prompt = `
 Generate 5 flashcards from this lecture in the following JSON format:
