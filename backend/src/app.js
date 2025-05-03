@@ -5,12 +5,14 @@ const authRoutes = require("./routes/authRoutes");
 //const nlpRoutes = require('./routes/nlpRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const aiRoutes = require("./routes/aiRoutes");
+const userRoutes = require("./routes/usersRoutes");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 app.use("/auth", authRoutes);
+app.use("/user",userRoutes);
 //app.use('/api/files', fileRoutes);
 //pp.use('/api/nlp', nlpRoutes);
 app.use("/api/ai", aiRoutes);
