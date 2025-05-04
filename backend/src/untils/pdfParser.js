@@ -1,10 +1,26 @@
+// src/untils/pdfParser.js (maintaining your folder structure)
+const pdfParse = require('pdf-parse');
 const fs = require('fs');
-const pdf = require('pdf-parse');
 
+/**
+ * Extract text from a PDF file
+ * @param {string} filePath - Path to the PDF file
+ * @returns {Promise<string>} - Extracted text
+ */
 const extractTextFromPDF = async (filePath) => {
-  const buffer = fs.readFileSync(filePath);
-  const data = await pdf(buffer);
-  return data.text;
+  try {
+    // Read the PDF file
+    const pdfBuffer = fs.readFileSync(filePath);
+    
+    // Parse the PDF
+    const data = await pdfParse(pdfBuffer);
+    
+    // Return the text content
+    return data.text;
+  } catch (error) {
+    console.error('Error extracting text from PDF:', error);
+    throw new Error('Failed to extract text from PDF');
+  }
 };
 
 module.exports = extractTextFromPDF;

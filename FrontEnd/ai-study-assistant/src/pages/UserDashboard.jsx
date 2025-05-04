@@ -1,10 +1,11 @@
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FileUpload from "../components/FileUpload";
 import ActionSelector from "../components/ActionSelector";
 import SummaryPage from "./SummaryPage";
 import FlashcardsPage from "./FlashcardsPage";
 import QuizPage from "./QuizPage";
+import HistoryPage from "./HistoryPage"; // Import the new HistoryPage
 import { uploadFile } from "../api";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
@@ -19,6 +20,14 @@ function UserDashboard() {
 
   const handleSubmit = async () => {
     if (!file) return toast.error("Please upload a file");
+    
+    // Check if user is authenticated
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("You must be logged in to use this feature");
+      navigate("/");
+      return;
+    }
     
     const toastId = toast.loading("Processing...");
     setIsLoading(true);
@@ -42,7 +51,17 @@ function UserDashboard() {
       console.error(error);
     
       toast.dismiss(toastId);
-      toast.error("Something went wrong");
+      
+      // Show more specific error message if available
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else if (error.response && error.response.status === 401) {
+        toast.error("Authentication error. Please log in again.");
+        logout(); // Force logout if authentication fails
+        navigate("/");
+      } else {
+        toast.error("Something went wrong");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +76,7 @@ function UserDashboard() {
           <Link to="/dashboard/summary" className="text-blue-600">Summary</Link>
           <Link to="/dashboard/flashcards" className="text-blue-600">Flashcards</Link>
           <Link to="/dashboard/quiz" className="text-blue-600">Quiz</Link>
+          <Link to="/dashboard/history" className="text-blue-600">History</Link>
           <div className="flex items-center ml-4 border-l pl-4">
             <span className="text-gray-600 mr-2">{user?.name || user?.email}</span>
             <button onClick={logout} className="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
@@ -92,15 +112,19 @@ function UserDashboard() {
         />
         <Route
           path="summary"
-          element={<SummaryPage result={result?.data?.result} />}
+          element={<SummaryPage result={result?.data} />}
         />
         <Route
           path="flashcards"
-          element={<FlashcardsPage result={result?.data?.result} />}
+          element={<FlashcardsPage result={result?.data} />}
         />
         <Route
           path="quiz"
-          element={<QuizPage result={result?.data?.result} />}
+          element={<QuizPage result={result?.data} />}
+        />
+        <Route
+          path="history"
+          element={<HistoryPage />}
         />
       </Routes>
     </div>

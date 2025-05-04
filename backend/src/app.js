@@ -6,6 +6,7 @@ const authRoutes = require("./routes/authRoutes");
 const errorHandler = require('./middleware/errorHandler');
 const aiRoutes = require("./routes/aiRoutes");
 const userRoutes = require("./routes/usersRoutes");
+const responseHistoryRoutes = require("./routes/responseHistoryRoutes");
 
 const app = express();
 app.use(cors());
@@ -16,6 +17,7 @@ app.use("/user",userRoutes);
 //app.use('/api/files', fileRoutes);
 //pp.use('/api/nlp', nlpRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/history", responseHistoryRoutes);
 
 app.use(errorHandler);
 module.exports = app;
