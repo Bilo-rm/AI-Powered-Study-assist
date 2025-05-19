@@ -1,4 +1,5 @@
 const { User } = require("../models/userModel");
+const { ResponseHistory } = require('../models/ResponseHistory');
 const bcrypt = require("bcryptjs");
 
 // Get all users
@@ -119,7 +120,6 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-// Delete a user
 exports.deleteUser = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -130,7 +130,12 @@ exports.deleteUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     
-    // Delete the user
+    // Delete all related ResponseHistories first
+    await ResponseHistory.destroy({ 
+      where: { userId: userId }
+    });
+    
+    // Then delete the user
     await user.destroy();
     
     res.status(200).json({ message: "User deleted successfully" });
@@ -139,5 +144,4 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: "Failed to delete user", error: error.message });
   }
 };
-
 // This middleware has been moved to authMiddleware.js

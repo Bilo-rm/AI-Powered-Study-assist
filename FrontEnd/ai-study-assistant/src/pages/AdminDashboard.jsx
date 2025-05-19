@@ -4,13 +4,16 @@ import { toast } from 'sonner';
 import axios from 'axios';
 
 // User Form Component
-const UserForm = ({ user, onSubmit, onCancel }) => {
+const UserForm = ({ user, onSubmit, onCancel, currentAdmin }) => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     password: '', // Empty by default, even when editing
     role: user?.role || 'user'
   });
+
+  // Check if this is the admin's own account
+  const isOwnAccount = currentAdmin?.id === user?.id;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,7 +32,9 @@ const UserForm = ({ user, onSubmit, onCancel }) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">{user ? 'Edit User' : 'Create New User'}</h2>
+      <h2 className="text-xl font-semibold mb-4">
+        {user ? (isOwnAccount ? 'Edit Your Account' : 'Change User Role') : 'Create New User'}
+      </h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-gray-700 mb-2">Name</label>
@@ -39,6 +44,7 @@ const UserForm = ({ user, onSubmit, onCancel }) => {
             value={formData.name}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            disabled={!isOwnAccount && user}
             required
           />
         </div>
@@ -50,6 +56,7 @@ const UserForm = ({ user, onSubmit, onCancel }) => {
             value={formData.email}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            disabled={!isOwnAccount && user}
             required
           />
         </div>
@@ -63,6 +70,7 @@ const UserForm = ({ user, onSubmit, onCancel }) => {
             value={formData.password}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            disabled={!isOwnAccount && user}
             required={!user}
           />
         </div>
@@ -91,7 +99,7 @@ const UserForm = ({ user, onSubmit, onCancel }) => {
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            {user ? 'Update' : 'Create'}
+            {user ? (isOwnAccount ? 'Update Account' : 'Update Role') : 'Create'}
           </button>
         </div>
       </form>
@@ -148,8 +156,21 @@ const AdminDashboard = () => {
   // Update existing user
   const updateUser = async (userData) => {
     try {
+      // Check if this is the admin's own account
+      const isOwnAccount = user.id === currentUser.id;
+      
+      // If not own account, only update role
+      if (!isOwnAccount) {
+        userData = { role: userData.role };
+      }
+      
       const response = await axios.put(`http://localhost:5000/user/users/${currentUser.id}`, userData);
-      toast.success('User updated successfully');
+      
+      toast.success(isOwnAccount ? 
+        'Your account updated successfully' : 
+        `User role updated to ${userData.role}`
+      );
+      
       fetchUsers();
       setShowForm(false);
       setCurrentUser(null);
@@ -159,17 +180,31 @@ const AdminDashboard = () => {
   };
 
   // Delete user
-  const deleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
-    
-    try {
-      await axios.delete(`http://localhost:5000/user/users/${userId}`);
-      toast.success('User deleted successfully');
-      fetchUsers();
-    } catch (err) {
-      toast.error('Failed to delete user: ' + (err.response?.data?.message || err.message));
-    }
-  };
+  // Modify your deleteUser function to capture more error information
+const deleteUser = async (userId) => {
+  // Prevent deleting own account
+  if (userId === user.id) {
+    toast.error("You cannot delete your own account");
+    return;
+  }
+  
+  if (!window.confirm('Are you sure you want to delete this user?')) return;
+
+  try {
+    await axios.delete(`http://localhost:5000/user/users/${userId}`);
+    toast.success('User deleted successfully');
+    fetchUsers();
+  } catch (err) {
+    // Log the full error response for debugging
+    console.error('Delete error details:', err.response);
+    // Show more detailed error message if available
+    const errorMessage = err.response?.data?.message || 
+                        err.response?.data?.error || 
+                        err.message || 
+                        'Unknown server error';
+    toast.error(`Failed to delete user: ${errorMessage}`);
+  }
+};
 
   // Handle form submission
   const handleSubmit = (formData) => {
@@ -213,6 +248,12 @@ const AdminDashboard = () => {
               </span>
             </div>
             <button
+              onClick={() => handleEdit(user)}
+              className="px-3 py-2 rounded-md text-sm font-medium text-blue-600 hover:bg-blue-100"
+            >
+              Edit Account
+            </button>
+            <button
               onClick={logout}
               className="px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-red-100"
             >
@@ -250,7 +291,8 @@ const AdminDashboard = () => {
             <UserForm 
               user={currentUser} 
               onSubmit={handleSubmit} 
-              onCancel={handleCancel} 
+              onCancel={handleCancel}
+              currentAdmin={user}
             />
           ) : (
             <>
@@ -280,35 +322,37 @@ const AdminDashboard = () => {
                         </tr>
                       ) : (
                         // Make sure users is an array before calling map
-                        Array.isArray(users) && users.map((user) => (
-                          <tr key={user.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                        Array.isArray(users) && users.map((userItem) => (
+                          <tr key={userItem.id} className={userItem.id === user.id ? "bg-blue-50" : ""}>
+                            <td className="px-6 py-4 whitespace-nowrap">{userItem.name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">{userItem.email}</td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                user.role === 'admin' 
+                                userItem.role === 'admin' 
                                   ? 'bg-purple-100 text-purple-800' 
                                   : 'bg-green-100 text-green-800'
                               }`}>
-                                {user.role}
+                                {userItem.role}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              {new Date(user.createdAt).toLocaleDateString()}
+                              {new Date(userItem.createdAt).toLocaleDateString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <button
-                                onClick={() => handleEdit(user)}
+                                onClick={() => handleEdit(userItem)}
                                 className="text-blue-600 hover:text-blue-900 mr-4"
                               >
-                                Edit
+                                {userItem.id === user.id ? 'Edit Account' : 'Change Role'}
                               </button>
-                              <button
-                                onClick={() => deleteUser(user.id)}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                Delete
-                              </button>
+                              {userItem.id !== user.id && (
+                                <button
+                                  onClick={() => deleteUser(userItem.id)}
+                                  className="text-red-600 hover:text-red-900"
+                                >
+                                  Delete
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))

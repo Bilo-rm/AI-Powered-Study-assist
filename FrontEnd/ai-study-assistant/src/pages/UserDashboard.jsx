@@ -6,6 +6,7 @@ import SummaryPage from "./SummaryPage";
 import FlashcardsPage from "./FlashcardsPage";
 import QuizPage from "./QuizPage";
 import HistoryPage from "./HistoryPage";
+import ProfilePage from "./ProfilePage";
 import { uploadFile } from "../api";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
@@ -144,22 +145,26 @@ function UserDashboard() {
                   History
                 </Link>
               </li>
+              {/* Added Profile Link */}
+
             </ul>
           </nav>
           
-          {/* Always visible logout section at the bottom of sidebar */}
+          {/* User profile section at the bottom of sidebar - Now clickable to go to profile page */}
           <div className="p-4 border-t border-gray-100">
-            <div className="flex items-center mb-4">
-              <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold">
-                {user?.name ? user.name.charAt(0).toUpperCase() : user?.email.charAt(0).toUpperCase()}
-              </div>
-              <div className="ml-2">
-                <div className="font-medium text-sm text-gray-900 truncate max-w-[140px]">
-                  {user?.name || user?.email}
+            <Link to="/dashboard/profile" className="block">
+              <div className="flex items-center mb-4 p-2 rounded-lg hover:bg-purple-50 transition-colors">
+                <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : user?.email.charAt(0).toUpperCase()}
                 </div>
-                <div className="text-xs text-gray-500">User</div>
+                <div className="ml-2">
+                  <div className="font-medium text-sm text-gray-900 truncate max-w-[140px]">
+                    {user?.name || user?.email}
+                  </div>
+                  <div className="text-xs text-gray-500">User Profile</div>
+                </div>
               </div>
-            </div>
+            </Link>
             <button 
               onClick={logout} 
               className="w-full flex items-center justify-center px-4 py-2 rounded text-sm font-medium text-red-600 hover:bg-red-50"
@@ -188,9 +193,9 @@ function UserDashboard() {
             </button>
             <h1 className="text-xl font-semibold text-purple-900">AI Study Assistant</h1>
             <div className="flex items-center">
-              <span className="text-sm text-gray-500 mr-4 hidden md:inline-block">
+              <Link to="/dashboard/profile" className="text-sm text-gray-500 mr-4 hidden md:inline-block hover:text-purple-700">
                 Welcome back, {user?.name || user?.email}
-              </span>
+              </Link>
             </div>
           </div>
         </div>
@@ -301,6 +306,11 @@ function UserDashboard() {
             <Route
               path="history"
               element={<HistoryPage />}
+            />
+            {/* Added Profile Route */}
+            <Route
+              path="profile"
+              element={<ProfilePage />}
             />
           </Routes>
         </div>
